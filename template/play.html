@@ -112,9 +112,13 @@
     <h1 style="font-size: 5rem;">GAME OVER</h1>
   </div>
 
-    <div class="grid">
-      <div class="grid-item" onclick="toggleTile(this)" data-word="{{ word }}"></div>
-    </div>
+  <div class="grid">
+    {% for row in grid %}
+        {% for word in row %}
+    <div class="grid-item" onclick="toggleTile(this)" data-word="{{ word }}">{{ word }}</div>
+        {% endfor %}
+    {% endfor %}
+  </div>
 
   <div class="mistake-counter">
      <div>Mistakes remaining</div>
