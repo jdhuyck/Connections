@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+  <style>
+    h3 {
+        font-family: 'Optima', sans-serif;
+        font-weight: normal;
+    }
+    h5 {
+        font-family: 'Optima', sans-serif;
+        font-weight: normal;
+    }
+    body {
+        font-family: 'Optima', sans-serif;
+    }
+      .grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          grid-gap: 10px;
+          max-width: 500px;
+          margin: auto;
+      }
+      .grid-item {
+          width: calc(24px + 4 * desktopItemWidth);
+          height: calc(24px + 4 * desktopItemHeight);
+          background-color: #ebebe3;
+          padding: 10px;
+          text-align: center;
+          cursor: pointer;
+          border-radius: 2px;
+          transition: background-color 0.3s;
+      }
+    .grid-item.disable-hover:hover {
+      background-color: #ebebe3;
+      color: black;
+    }
+      .grid-item.selected {
+          background-color: #5a594e;
+          color: white;
+      }
+      .selected, .disable-hover:hover {
+          background-color: #5a594e;
+          color: white;
+      }
+      .button-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .game-button {
+        font-family: 'Optima', sans-serif;
+        padding: 10px 20px;
+        margin: 0 10px;
+        border-radius: 8px;
+        background-color: white;
+      }
+      .green, .yellow, .purple, .blue {
+        color: white;
+      }
+      .green {
+        background-color: #a4c45c;
+      }
+      .yellow {
+        background-color: #fadb6c;
+        color: black;
+      }
+      .purple {
+        background-color: #b984c1;
+      }
+      .blue {
+        background-color: #2c84ec;
+      }
+      .correct-guess-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .correct-guess {
+        margin-bottom: 5px;
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #ddd;
+      }
+      .mistake-counter {
+        text-align: center;
+        margin: 20px auto;
+      }
+      .mistake-square {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        margin: 2px;
+        background: #FFFFF7;
+      }
+      .mistake {
+        background: #5a594e;
+      }
+      .game-button.disabled {
+        background-color: #ccc;
+        pointer-events: none;
+      }
+  </style>
+</head>
+<body>
+  <div style="text-align: center; margin-top: 20px;">
+    <h3>Create groups of four!</h3>
+  <h5>A Replication of <a href="https://www.nytimes.com/games/connections"> NYT Connections</a>, built on Replit</h5>
+</div>
+  <div id="game-over-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); color: white; text-align: center; padding-top: 20%;">
+    <h1 style="font-size: 5rem;">GAME OVER</h1>
+  </div>
+
+    <div class="grid">
+        {% for row in grid %}
+            {% for word in row %}
+      <div class="grid-item" onclick="toggleTile(this)" data-word="{{ word }}">{{ word }}</div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+
+  <div class="mistake-counter">
+     <div>Mistakes remaining</div>
+      {% for _ in range(session.mistakes) %}
+          <div class="mistake-square mistake"></div>
+      {% endfor %}
+      {% for _ in range(4 - session.mistakes) %}
+          <div class="mistake-square"></div>
+      {% endfor %}
+  </div>
+
+  <div class="button-container">
+    <button id="shuffle-button" class="game-button" onclick="shuffleTiles()">Shuffle</button>
+    <button id="submit-button" class="game-button" onclick="submitGuess()">Submit Guess</button>
+    <p id="message" style="color: red;"></p>
+  </div>
+  <div id="correct-guess-container"></div>
+<script>
+var desktopItemWidth = getCSSVariableValue('--desktop-item-width');
+var desktopItemHeight = getCSSVariableValue('--desktop-item-height');
+function clearMessage() {
+    const messageElement = document.getElementById('message');
+    if (messageElement) {
+        messageElement.textContent = '';
+    }
+}
+
+startNewGame();
+
+function displayCorrectCategory(categoryName, words, colorClass) {
+      const container = document.getElementById('correct-guess-container');
+      const newLine = document.createElement('div');
+      newLine.classList.add('correct-guess', colorClass);
+      newLine.innerHTML = '<strong>' + categoryName + ':</strong> ' + words.join(', ');
+      container.appendChild(newLine);
+  }
+  
+  function submitGuess() {
+      clearMessage();
+      var selectedTiles = document.querySelectorAll('.grid-item.selected');
+      var selectedWords = Array.from(selectedTiles).map(tile => tile.dataset.word);
+
+      if (selectedWords.length === 0) {
+          alert("No words selected!");
+          return;
+      }
+
+      // Disable submit button for this selection if previously submitted
+      const submittedGroups = getSubmittedGroups();
+      const selectionKey = JSON.stringify(selectedWords.sort());
+      if (submittedGroups.has(selectionKey)) {
+          document.getElementById('submit-button').classList.add('disabled');
+          const messageElement = document.getElementById('message');
+          messageElement.textContent = 'This group has already been submitted.';
+          return;
+      }
+    
+      fetch('/submit_guess', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ selectedWords: selectedWords })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.result === 'success') {
+              selectedTiles.forEach(tile => {
+                  tile.classList.remove('selected');
+                  tile.classList.add(data.color);
+                  tile.style.pointerEvents = 'none';
+              });
+              displayCorrectCategory(data.category, data.words, data.color);
+              checkGameCompletion();  // Call a function to check game completion
+              markGroupAsSubmitted(selectedWords);
+          } else {
+              const messageElement = document.getElementById('message');
+              messageElement.textContent = data.message || 'Something went wrong. Please try again.';
+            if('mistakes' in data) {  
+            updateMistakes(data.mistakes); // This line is added to update the mistake squares
+          }
+          }
+      });
+  }
+
+  function updateMistakes(mistakesRemaining) {
+      const mistakeSquares = document.querySelectorAll('.mistake-square');
+      mistakeSquares.forEach((square, index) => {
+          if (index < mistakesRemaining) {
+              square.classList.add('mistake');
+          } else {
+              square.classList.remove('mistake');
+          }
+      });
+  }
+  function markGroupAsSubmitted(group) {
+      const submittedGroups = getSubmittedGroups();
+      const selectionKey = JSON.stringify(group.sort());
+      submittedGroups.add(selectionKey);
+      localStorage.setItem('submittedGroups', JSON.stringify(Array.from(submittedGroups)));
+  }
+  // Helper function to get stored submitted groups
+  function getSubmittedGroups() {
+      const submittedGroups = localStorage.getItem('submittedGroups');
+      return new Set(submittedGroups ? JSON.parse(submittedGroups) : []);
+  }
+  function startNewGame() {
+      resetSubmittedGroups(); // Resets stored submitted groups for a new game
+      // Any additional code needed to start a new game should be added here
+  }
+  // Call this function when starting a new game to clear saved groups
+  function resetSubmittedGroups() {
+      localStorage.removeItem('submittedGroups');
+      document.getElementById('submit-button').classList.remove('disabled');
+  }
+  // Make sure to call resetSubmittedGroups() when the game is (re)started
+  // Possibly add a call to this function wherever you are handling a new game start
+
+  function checkGameCompletion() {
+      const totalTiles = document.querySelectorAll('.grid-item').length;
+      const guessedTiles = document.querySelectorAll('.grid-item.green, .grid-item.yellow, .grid-item.purple, .grid-item.blue').length;
+
+      if (totalTiles === guessedTiles) {
+          triggerConfetti();  // If all tiles have been guessed, trigger the confetti effect
+      }
+  }
+
+  function shuffleTiles() {
+      clearMessage();
+      document.querySelectorAll('.grid-item.selected').forEach(tile => tile.classList.remove('selected'));
+      document.querySelectorAll('.grid-item').forEach(tile => {
+          if (!tile.classList.contains('green') &&
+              !tile.classList.contains('yellow') &&
+              !tile.classList.contains('purple') &&
+              !tile.classList.contains('blue')) {
+              const currentWord = tile.getAttribute('data-word');
+              let randomIndex, randomTile;
+              do {
+                  randomIndex = Math.floor(Math.random() * document.querySelectorAll('.grid-item').length);
+                  randomTile = document.querySelectorAll('.grid-item')[randomIndex];
+              } while(randomTile.classList.contains('green') ||
+                      randomTile.classList.contains('yellow') ||
+                      randomTile.classList.contains('purple') ||
+                      randomTile.classList.contains('blue'));
+              const randomWord = randomTile.getAttribute('data-word');
+              tile.setAttribute('data-word', randomWord);
+              tile.textContent = randomWord;
+              randomTile.setAttribute('data-word', currentWord);
+              randomTile.textContent = currentWord;
+          }
+      });
+  }
+
+  function toggleTile(element) {
+      clearMessage();
+      // Count the number of selected items
+      const selectedTiles = document.querySelectorAll('.grid-item.selected').length;
+      // If 4 or more items are selected, return without toggling the state of non-selected tiles
+      if (selectedTiles >= 4 && !element.classList.contains('selected')) {
+          return;
+      }
+      // Toggle the 'selected' state for the clicked tile
+      element.classList.toggle('selected');
+      // Repeat the existing check to disable/enable hover effect when necessary
+      if (document.querySelectorAll('.grid-item.selected').length >= 4) {
+          document.querySelectorAll('.grid-item:not(.selected)').forEach(tile => {
+              tile.classList.add('disable-hover');
+          });
+      } else {
+          document.querySelectorAll('.grid-item').forEach(tile => {
+              tile.classList.remove('disable-hover');
+          });
+      }
+  }
+  // 
+
+  function gameOver() {
+      const gameOverContainer = document.getElementById('game-over-container');
+      gameOverContainer.style.display = 'block';
+  }
+  function updateMistakes(mistakesRemaining) {
+      const mistakeSquares = document.querySelectorAll('.mistake-square');
+      mistakeSquares.forEach((square, index) => {
+          if (index < mistakesRemaining) {
+              square.classList.add('mistake');
+          } else {
+              square.classList.remove('mistake');
+          }
+      });
+
+      // Show GAME OVER if no mistakes are remaining
+      if (mistakesRemaining === 0) {
+          gameOver();
+      }
+  }
+  function triggerConfetti() {
+      confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+      });
+  }
+
+  function getCSSVariableValue(variableName) {
+    var rootStyle = getComputedStyle(document.documentElement);
+    var value = rootStyle.getPropertyValue(variableName);
+    return value.trim();
+  }
+  document.addEventListener('DOMContentLoaded', function (event) {
+      // Disable hover effect if 4 tiles are already selected at the start
+      if (document.querySelectorAll('.grid-item.selected').length >= 4) {
+          document.querySelectorAll('.grid-item:not(.selected)').forEach(tile => {
+              tile.classList.add('disable-hover');
+          });
+      }
+  });
+   </script>
+     <script src="https://replit.com/public/js/replit-badge-v2.js"
+    theme="dark"
+    position="bottom-right"> </script>
+</body>
+</html>
