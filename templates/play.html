@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a Connections Puzzle</title>
+    <style>
+        .category { margin-bottom: 20px; padding: 10px; border-radius: 5px; }
+        .category-yellow { background: yellow; }
+        .category-green { background: lightgreen; }
+        .category-blue { background: lightblue; }
+        .category-purple { background: plum; }
+    </style>
+</head>
+<body>
+    <h2>Create a New Connections Puzzle</h2>
+    <label for="creator">Your Name:</label>
+    <input type="text" id="creator" required><br><br>
+    
+    <label for="title">Puzzle Title:</label>
+    <input type="text" id="title" required><br><br>
+    
+    <form id="puzzle-form">
+        <div id="categories">
+            <div class="category category-yellow">
+                <label>Category Title:</label>
+                <input type="text" class="category-title" required>
+                <div class="words">
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                </div>
+            </div>
+            <div class="category category-green">
+                <label>Category Title:</label>
+                <input type="text" class="category-title" required>
+                <div class="words">
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                </div>
+            </div>
+            <div class="category category-blue">
+                <label>Category Title:</label>
+                <input type="text" class="category-title" required>
+                <div class="words">
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                </div>
+            </div>
+            <div class="category category-purple">
+                <label>Category Title:</label>
+                <input type="text" class="category-title" required>
+                <div class="words">
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                    <input type="text" class="word" required>
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="submitPuzzle()">Create Puzzle</button>
+    </form>
+    
+    <p id="message"></p>
+    
+    <script>
+        async function submitPuzzle() {
+            const creator = document.getElementById("creator").value;
+            const title = document.getElementById("title").value;
+            const categories = [];
+            
+            document.querySelectorAll(".category").forEach((category, index) => {
+                const title = category.querySelector(".category-title").value;
+                const words = Array.from(category.querySelectorAll(".word")).map(input => input.value);
+                categories.push({ title, words });
+            });
+            
+            const response = await fetch("/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ creator, title, categories })
+            });
+            const result = await response.json();
+            
+            if (result.puzzle_id) {
+                document.getElementById("message").innerHTML = `Puzzle Created! <a href="/play/${result.puzzle_id}">Play here</a>`;
+            } else {
+                document.getElementById("message").textContent = "Error creating puzzle.";
+            }
+        }
+    </script>
+</body>
+</html>
