@@ -1,0 +1,174 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    font-family: "Almendra SC", serif;
+    text-shadow: white 0px 0px 4px;
+    word-break: break-all;
+}
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.content {
+    position: relative;
+    width: 80%;
+    max-width: 100%;
+    padding: 12px;
+    overflow:hidden;
+    flex-flow:row wrap;
+
+    -webkit-justify-content: flex;
+    -moz-justify-content: -moz-flex;
+    justify-content: flex;
+
+    display: -webkit-box; /* Safari */ 
+    display: -moz-box; /* Firefox 21- */
+    display: -ms-flexbox; /* IE 10+ */
+    display: -webkit-flex; /* Chrome */
+    display: flex; /* Standard (Firefox 22+) */
+
+    -webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -moz-box-direction: normal;
+    -ms-flex-direction: row;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}
+.form-container {
+    width: 50%;
+    min-width: 400px;
+    box-sizing: border-box;
+
+
+    -ms-flex-order: 1;     
+    -webkit-order: 1;
+    order:1;
+
+    -webkit-box-flex: 2;      /* OLD - iOS 6-, Safari 3.1-6 */
+    -moz-box-flex: 2;         /* OLD - Firefox 19- */
+    -webkit-flex: 2;          /* Chrome */
+    -ms-flex: 2;              /* IE 10 */
+    flex: 2;                  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+}
+.grid-preview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 10px;
+    width: 50%;
+    max-width: 600px;
+    padding: 20px;
+    box-sizing: border-box;
+
+    
+    -ms-flex-order: 2;
+    -webkit-order: 2;
+    order:2;
+
+    -webkit-box-flex: 1;      /* OLD - iOS 6-, Safari 3.1-6 */
+    -moz-box-flex: 1;         /* OLD - Firefox 19- */
+    -webkit-flex: 1;          /* Chrome */
+    -ms-flex: 1;              /* IE 10 */
+    flex: 1;                  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+
+    -webkit-box-ordinal-group: 2;   /* OLD - iOS 6-, Safari 3.1-6 */
+    -moz-box-ordinal-group: 2;      /* OLD - Firefox 19- */
+    -ms-flex-order: 2;              /* TWEENER - IE 10 */
+    -webkit-order: 2;               /* NEW - Chrome */
+    order: 2;                       /* NEW, Spec - Opera 12.1, Firefox 20+ */
+}
+.grid-item {
+    display:flex;
+    background:#efefe6;
+    border-radius:6px;
+    width: 8rem;
+    height: 4rem;
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    font-size: 1rem;
+}
+.category {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.category-yellow { background-color: #f1c40f; }
+.category-yellow input { background-color: #fbedb7;} 
+.category-green { background-color: #2ecc71; }
+.category-green input { background-color: #c1f1d5; }
+.category-blue { background-color: #3498db; }
+.category-blue input { background-color: #93c8ec; }
+.category-purple { background-color: #9b59b6; }
+.category-purple input { background-color: #d5b8e0; }
+.category-title {
+    display: block;
+    width: 90%;
+    flex: 1;
+    margin-bottom: 5px;
+    text-align: left;
+}
+.words {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.word {
+    flex: 1;
+    margin-right: 5px;
+    text-align: left;
+}
+.word:last-child { margin-right: 0; }
+.category input {
+    margin-top: 10px;
+    padding: 8px;
+    width: 95%;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.category label {
+    fill-opacity: 1;
+    text-shadow: white 0px 0px 4px;
+    font-size: 22;
+    color: #3e3e4b;
+    text-align: left;
+    margin-top: 10px;
+}
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #2980b9;
+}
+@media screen and (max-width: 900px) {
+    .content {
+        -webkit-box-orient: vertical;
+        -moz-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -moz-box-direction: normal;
+        box-orient: vertical;
+        -ms-flex-direction: column;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+    }
+}
