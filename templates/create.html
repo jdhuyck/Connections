@@ -3,71 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create a Connections Puzzle</title>
-    <style>
-        .category { margin-bottom: 20px; padding: 10px; border-radius: 5px; }
-        .category-yellow { background: yellow; }
-        .category-green { background: lightgreen; }
-        .category-blue { background: lightblue; }
-        .category-purple { background: plum; }
-    </style>
+    <title>Connections | Create</title>
+    <link rel="stylesheet", type="text/css" href="../static/styles.css">
 </head>
 <body>
-    <h2>Create a New Connections Puzzle</h2>
-    <label for="creator">Your Name:</label>
-    <input type="text" id="creator" required><br><br>
-    
-    <label for="title">Puzzle Title:</label>
-    <input type="text" id="title" required><br><br>
-    
-    <form id="puzzle-form">
-        <div id="categories">
-            <div class="category category-yellow">
-                <label>Category Title:</label>
-                <input type="text" class="category-title" required>
-                <div class="words">
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                </div>
+    <div class="container">
+        <h2>Create a New Connections Puzzle</h2>
+        <div class="content">
+            <div class="form-container">          
+                <form id="puzzle-form">
+                    <div id="categories">
+                        <div class="category category-yellow">
+                            <label>Answers</label>
+                            <div class="words">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                            </div>
+                            <label>Description</label>
+                            <input type="text" class="category-title" required>
+                        </div>
+                        <div class="category category-green">
+                            <label>Answers</label>
+                            <div class="words">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                            </div>
+                            <label>Description</label>
+                            <input type="text" class="category-title" required>
+                        </div>
+                        <div class="category category-blue">
+                            <label>Answers</label>
+                            <div class="words">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                            </div>
+                            <label>Description</label>
+                            <input type="text" class="category-title" required>
+                        </div>
+                        <div class="category category-purple">
+                            <label>Answers</label>
+                            <div class="words">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                                <input type="text" class="word">
+                            </div>
+                            <label>Description</label>
+                            <input type="text" class="category-title" required>
+                        </div>
+                    </div>
+                    <button type="button" onclick="submitPuzzle()">Create Puzzle</button>
+                </form>
+                
+                <p id="message"></p>
             </div>
-            <div class="category category-green">
-                <label>Category Title:</label>
-                <input type="text" class="category-title" required>
-                <div class="words">
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                </div>
-            </div>
-            <div class="category category-blue">
-                <label>Category Title:</label>
-                <input type="text" class="category-title" required>
-                <div class="words">
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                </div>
-            </div>
-            <div class="category category-purple">
-                <label>Category Title:</label>
-                <input type="text" class="category-title" required>
-                <div class="words">
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                    <input type="text" class="word" required>
-                </div>
-            </div>
+            <div class="grid-preview" id="grid-preview"></div>
         </div>
-        <button type="button" onclick="submitPuzzle()">Create Puzzle</button>
-    </form>
-    
-    <p id="message"></p>
-    
+    </div>
+    <script>
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function updateGridPreview() {
+            const gridPreview = document.getElementById("grid-preview");
+            gridPreview.innerHTML = "";
+            
+            let words = [];
+            document.querySelectorAll(".word").forEach(input => {
+                if (input.value.trim()) words.push(input.value.trim());
+            });
+            
+            shuffleArray(words);
+            
+            for (let i = 0; i < 16; i++) {
+                const div = document.createElement("div");
+                div.className = "grid-item";
+                div.textContent = words[i] || "";
+                gridPreview.appendChild(div);
+            }
+        }
+        
+        document.getElementById("puzzle-form").addEventListener("input", updateGridPreview);
+        updateGridPreview();
+    </script>
     <script>
         async function submitPuzzle() {
             const creator = document.getElementById("creator").value;
