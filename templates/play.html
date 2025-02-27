@@ -8,87 +8,114 @@
     <link rel="stylesheet", type="text/css" href="../static/styles.css">
 </head>
 <body>
-    <h2>Connections Puzzle</h2>
-    <div id="completed-categories"></div>
-    <div class="grid" id="word-grid"></div>
-    <button onclick="submitGuess()">Submit Guess</button>
-    <p id="message"></p>
-    
+    <div class="container">
+        <div class="title" id="puzzle-title">Puzzle Title</div>
+        <div class="author" id="puzzle-author">Created by: Author</div>
+        <div class="grid-container" id="grid"></div>
+        <div class="button-container">
+            <button id="shuffle-button">Shuffle</button>
+            <button id="submit-button" disabled>Submit Guess</button>
+        </div>
+    </div>
     <script>
         let words = [];
-        let selectedWords = [];
         let categories = {};
-        let colors = ["category-yellow", "category-green", "category-blue", "category-purple"];
-        let categoryIndex = 0;
-        let solvedCategories = {};
-        
-        async function fetchPuzzle() {
-            const puzzleId = window.location.pathname.split("/").pop();
-            const response = await fetch(`/play/${puzzleId}`);
-            const data = await response.json();
-            words = data.words;
-            categories = data.categories;
-            renderGrid();
-        }
+        let selectedTiles = [];
 
-        function renderGrid() {
-            const grid = document.getElementById("word-grid");
-            grid.innerHTML = "";
-            words.forEach(word => {
-                const tile = document.createElement("div");
-                tile.textContent = word;
-                tile.classList.add("tile");
-                tile.onclick = () => toggleSelection(word, tile);
-                grid.appendChild(tile);
-            });
-        }
-
-        function toggleSelection(word, tile) {
-            if (selectedWords.includes(word)) {
-                selectedWords = selectedWords.filter(w => w !== word);
-                tile.classList.remove("selected");
-            } else if (selectedWords.length < 4) {
-                selectedWords.push(word);
-                tile.classList.add("selected");
-            }
-        }
-
-        async function submitGuess() {
-            if (selectedWords.length !== 4) {
-                document.getElementById("message").textContent = "Select exactly 4 words.";
+        async function fetchPuzzleData() {
+            const params = new URLSearchParams(window.location.search);
+            const puzzleId = params.get("id");
+            if (!puzzleId) {
+                alert("Puzzle ID is missing.");
                 return;
             }
 
-            const response = await fetch(window.location.pathname, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ guess: selectedWords })
-            });
-            const result = await response.json();
-            document.getElementById("message").textContent = result.message;
-
-            if (result.correct) {
-                moveToCategory(selectedWords);
+            try {
+                const response = await fetch(`/get_puzzle?id=${puzzleId}`);
+                const data = await response.json();
+                document.getElementById("puzzle-title").textContent = data.title;
+                document.getElementById("puzzle-author").textContent = `Created by: ${data.author}`;
+                words = [...data.words];
+                categories = data.categories;
+                shuffleArray(words);
+                renderGrid();
+            } catch (error) {
+                console.error("Error fetching puzzle data:", error);
             }
         }
 
-        function moveToCategory(wordsGroup) {
-            const categoryContainer = document.getElementById("completed-categories");
-            const row = document.createElement("div");
-            row.classList.add("completed-row", colors[categoryIndex]);
-            wordsGroup.forEach(word => {
-                const wordDiv = document.createElement("div");
-                wordDiv.classList.add("tile", colors[categoryIndex]);
-                wordDiv.textContent = word;
-                row.appendChild(wordDiv);
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById("grid");
+            grid.innerHTML = "";
+            words.forEach((word, index) => {
+                const div = document.createElement("div");
+                div.className = "grid-item";
+                div.textContent = word;
+                div.dataset.index = index;
+                div.onclick = () => toggleSelection(div);
+                grid.appendChild(div);
             });
-            categoryContainer.appendChild(row);
-            words = words.filter(word => !wordsGroup.includes(word));
-            categoryIndex = (categoryIndex + 1) % colors.length;
+        }
+
+        function toggleSelection(tile) {
+            const index = tile.dataset.index;
+            if (selectedTiles.includes(index)) {
+                selectedTiles = selectedTiles.filter(i => i !== index);
+                tile.classList.remove("selected");
+            } else if (selectedTiles.length < 4) {
+                selectedTiles.push(index);
+                tile.classList.add("selected");
+            }
+            document.getElementById("submit-button").disabled = selectedTiles.length !== 4;
+        }
+
+        document.getElementById("shuffle-button").addEventListener("click", () => {
+            shuffleArray(words);
+            renderGrid();
+        });
+
+        document.getElementById("submit-button").addEventListener("click", async () => {
+            const selectedWords = selectedTiles.map(index => words[index]);
+            try {
+                const response = await fetch("/check_guess", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ words: selectedWords })
+                });
+                const result = await response.json();
+                if (result.correct) {
+                    updateGridWithCategory(result.category, selectedWords);
+                }
+            } catch (error) {
+                console.error("Error submitting guess:", error);
+            }
+            selectedTiles = [];
+              document.getElementById("submit-button").disabled = true;
+        });
+
+        function updateGridWithCategory(category, wordsInCategory) {
+            const grid = document.getElementById("grid");
+            const colorMap = { "yellow": "#FFD700", "green": "#32CD32", "blue": "#1E90FF", "purple": "#8A2BE2" };
+            const categoryColor = colorMap[category.color] || "gray";
+            
+            const categoryRow = document.createElement("div");
+            categoryRow.className = "category-row";
+            categoryRow.style.backgroundColor = categoryColor;
+            categoryRow.textContent = category.name;
+            
+            grid.prepend(categoryRow);
+            words = words.filter(word => !wordsInCategory.includes(word));
             renderGrid();
         }
 
-        fetchPuzzle();
+      fetchPuzzleData();
     </script>
 </body>
 </html>
