@@ -11,6 +11,10 @@ body {
     flex-wrap: wrap;
     justify-content: center;
 }
+.author {
+    font-size: 1rem;
+    margin-bottom: 20px
+}
 .content {
     position: relative;
     width: 80%;
@@ -95,6 +99,16 @@ body {
     white-space: normal;
     font-size: 1rem;
 }
+.category-row {
+    grid-column: span 4;
+    height: 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
 .category {
     margin-bottom: 20px;
     padding: 10px;
@@ -159,6 +173,10 @@ button {
 }
 button:hover {
     background-color: #2980b9;
+}
+button:disabled {
+    background: gray;
+    cursor: not-allowed;
 }
 @media screen and (max-width: 900px) {
     .content {
