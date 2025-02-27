@@ -160,6 +160,11 @@ body {
     text-align: left;
     margin-top: 10px;
 }
+.button-container {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
 button {
     display: block;
     width: 100%;

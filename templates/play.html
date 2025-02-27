@@ -16,32 +16,20 @@
             <button id="shuffle-button">Shuffle</button>
             <button id="submit-button" disabled>Submit Guess</button>
         </div>
+        <p id="feedback"></p>
     </div>
     <script>
         let words = [];
-        let categories = {};
         let selectedTiles = [];
+        let puzzleId = new URLSearchParams(window.location.search).get("id");
 
-        async function fetchPuzzleData() {
-            const params = new URLSearchParams(window.location.search);
-            const puzzleId = params.get("id");
-            if (!puzzleId) {
-                alert("Puzzle ID is missing.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`/get_puzzle?id=${puzzleId}`);
-                const data = await response.json();
-                document.getElementById("puzzle-title").textContent = data.title;
-                document.getElementById("puzzle-author").textContent = `Created by: ${data.author}`;
-                words = [...data.words];
-                categories = data.categories;
-                shuffleArray(words);
-                renderGrid();
-            } catch (error) {
-                console.error("Error fetching puzzle data:", error);
-            }
+        async function fetchPuzzle() {
+            let response = await fetch(`/play?id=${puzzleId}`);
+            let data = await response.json();
+            document.getElementById("puzzle-title").textContent = data.title;
+            document.getElementById("puzzle-author").textContent = "Created by: " + data.author;
+            words = data.words;
+            renderGrid();
         }
 
         function shuffleArray(array) {
@@ -76,46 +64,32 @@
             document.getElementById("submit-button").disabled = selectedTiles.length !== 4;
         }
 
+        async function submitGuess() {
+            let selectedWords = selectedTiles.map(i => words[i]);
+            let response = await fetch(`/play?id=${puzzleId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ words: selectedWords })
+            });
+            let result = await response.json();
+
+            if (result.error) {
+                alert(result.error);
+            } else if (result.correct) {
+                alert(`Correct! Category: ${result.category.name}`);
+            } else if (result.one_away) {
+                alert("You're one away from a correct answer!");
+            } else {
+                alert("Incorrect guess.");
+            }
+        }
+
         document.getElementById("shuffle-button").addEventListener("click", () => {
             shuffleArray(words);
             renderGrid();
         });
 
-        document.getElementById("submit-button").addEventListener("click", async () => {
-            const selectedWords = selectedTiles.map(index => words[index]);
-            try {
-                const response = await fetch("/check_guess", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ words: selectedWords })
-                });
-                const result = await response.json();
-                if (result.correct) {
-                    updateGridWithCategory(result.category, selectedWords);
-                }
-            } catch (error) {
-                console.error("Error submitting guess:", error);
-            }
-            selectedTiles = [];
-              document.getElementById("submit-button").disabled = true;
-        });
-
-        function updateGridWithCategory(category, wordsInCategory) {
-            const grid = document.getElementById("grid");
-            const colorMap = { "yellow": "#FFD700", "green": "#32CD32", "blue": "#1E90FF", "purple": "#8A2BE2" };
-            const categoryColor = colorMap[category.color] || "gray";
-            
-            const categoryRow = document.createElement("div");
-            categoryRow.className = "category-row";
-            categoryRow.style.backgroundColor = categoryColor;
-            categoryRow.textContent = category.name;
-            
-            grid.prepend(categoryRow);
-            words = words.filter(word => !wordsInCategory.includes(word));
-            renderGrid();
-        }
-
-      fetchPuzzleData();
+        fetchPuzzle();
     </script>
 </body>
 </html>
