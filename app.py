@@ -42,9 +42,9 @@ def create():
     
     return render_template("create.html")
 
-@app.route('/play', methods=['GET', 'POST'])
+@app.route('/play/puzzle_id>', methods=['GET', 'POST'])
 def play():
-    puzzle_id = request.args.get('id')
+    puzzle_id = request.args.get('puzzle_id')
     if not puzzle_id:
         return jsonify({"error": "Puzzle ID is required"}), 400
 
