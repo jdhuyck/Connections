@@ -24,10 +24,10 @@
         let puzzleId = new URLSearchParams(window.location.search).get("id");
 
         async function fetchPuzzle() {
-            let response = await fetch(`/play?id=${puzzleId}`);
+            let response = await fetch(`/play/${puzzleId}`);
             let data = await response.json();
             document.getElementById("puzzle-title").textContent = data.title;
-            document.getElementById("puzzle-author").textContent = "Created by: " + data.author;
+            document.getElementById("puzzle-author").textContent = "Created by: " + data.creator;
             words = data.words;
             renderGrid();
         }

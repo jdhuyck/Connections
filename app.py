@@ -42,12 +42,8 @@ def create():
     
     return render_template("create.html")
 
-@app.route('/play/puzzle_id>', methods=['GET', 'POST'])
-def play():
-    puzzle_id = request.args.get('puzzle_id')
-    if not puzzle_id:
-        return jsonify({"error": "Puzzle ID is required"}), 400
-
+@app.route('/play/<puzzle_id>', methods=['GET', 'POST'])
+def play(puzzle_id):
     conn = get_db_connection()
     puzzle = conn.execute("SELECT * FROM puzzles WHERE id = ?", (puzzle_id,)).fetchone()
     conn.close()
@@ -56,11 +52,13 @@ def play():
         return jsonify({"error": "Puzzle not found"}), 404
 
     # Reconstruct categories
+    titles = list(puzzle["categories"].keys())
+    words = list(puzzle["categories"].values())
     categories = {
-        "yellow": {"name": puzzle["category1_title"], "words": {puzzle["category1_word1"], puzzle["category1_word2"], puzzle["category1_word3"], puzzle["category1_word4"]}},
-        "green": {"name": puzzle["category2_title"], "words": {puzzle["category2_word1"], puzzle["category2_word2"], puzzle["category2_word3"], puzzle["category2_word4"]}},
-        "blue": {"name": puzzle["category3_title"], "words": {puzzle["category3_word1"], puzzle["category3_word2"], puzzle["category3_word3"], puzzle["category3_word4"]}},
-        "purple": {"name": puzzle["category4_title"], "words": {puzzle["category4_word1"], puzzle["category4_word2"], puzzle["category4_word3"], puzzle["category4_word4"]}},
+        "yellow": {"name": titles[0], "words": words[0]},
+        "green":  {"name": titles[1], "words": words[1]},
+        "blue":   {"name": titles[2], "words": words[2]},
+        "purple": {"name": titles[3], "words": words[3]},
     }
 
     player_guesses = {}
