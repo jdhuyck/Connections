@@ -65,49 +65,57 @@ def play(puzzle_id):
         "purple": {"name": titles[3], "words": words[3]},
     }
 
+    # Constants
+    all_words = sum([list(cat["words"]) for cat in categories.values()], [])
+    random.shuffle(all_words)
+    
+    # Variables
     player_guesses = {}
 
-    # Return puzzle data on GET request
-    if request.method == 'GET':
-        # Store player's guesses if not already present
-        if puzzle_id not in player_guesses:
-            player_guesses[puzzle_id] = set()
+    # # Return puzzle data on GET request
+    # if request.method == 'GET':
+    #     # Store player's guesses if not already present
+    #     if puzzle_id not in player_guesses:
+    #         player_guesses[puzzle_id] = set()
 
-        # Collect all words and shuffle
-        all_words = sum([list(cat["words"]) for cat in categories.values()], [])
-        random.shuffle(all_words)
+    #     # Collect all words and shuffle
+    #     all_words = sum([list(cat["words"]) for cat in categories.values()], [])
+    #     random.shuffle(all_words)
 
-        return jsonify({
-            "title": puzzle["title"],
-            "author": puzzle["creator"],
-            "words": all_words,
-            "categories": categories
-        })
+    #     return jsonify({
+    #         "title": puzzle["title"],
+    #         "author": puzzle["creator"],
+    #         "words": all_words,
+    #         "categories": categories
+    #     })
 
     # Handle guess submission on POST request
-    elif request.method == 'POST':
+    if request.method == 'POST':  # Handle guesses
         data = request.get_json()
-        selected_words = tuple(sorted(data.get("words")))  # Store sorted tuple to track guesses
+        selected_words = tuple(sorted(data.get("words", [])))
 
         if not selected_words or len(selected_words) != 4:
             return jsonify({"error": "Invalid guess"}), 400
 
-        # Check if the guess has already been made
+        if puzzle_id not in player_guesses:
+            player_guesses[puzzle_id] = set()
+
         if selected_words in player_guesses[puzzle_id]:
             return jsonify({"error": "Repeated guess"}), 400
 
-        player_guesses[puzzle_id].add(selected_words)  # Store guess
+        player_guesses[puzzle_id].add(selected_words)
 
         for color, category in categories.items():
             if set(selected_words) == category["words"]:
                 return jsonify({"correct": True, "category": {"name": category["name"], "color": color}})
 
-        # Check if the guess is "one away" (3 correct, 1 wrong)
         for color, category in categories.items():
             if len(set(selected_words) & category["words"]) == 3:
                 return jsonify({"correct": False, "one_away": True})
 
         return jsonify({"correct": False, "one_away": False})
+    
+    return render_template("play.html", puzzle_id=puzzle_id, title=puzzle["title"], author=puzzle["creator"], words=all_words)
 
 if __name__ == "__main__":
     init_db()

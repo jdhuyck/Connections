@@ -11,9 +11,19 @@ body {
     flex-wrap: wrap;
     justify-content: center;
 }
+.title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
 .author {
     font-size: 1rem;
-    margin-bottom: 20px
+    margin-bottom: 10px;
+    color: gray;
+}
+.guess-counter {
+    font-size: 1rem;
+    margin-bottom: 20px;
 }
 .content {
     position: relative;
@@ -85,11 +95,11 @@ body {
     order: 2;                       /* NEW, Spec - Opera 12.1, Firefox 20+ */
 }
 .grid-item {
+    aspect-ratio: 5/2;
+    max-width: 25rem;
     display:flex;
     background:#efefe6;
     border-radius:6px;
-    width: 8rem;
-    height: 4rem;
     padding: 10px;
     text-align: center;
     display: flex;
@@ -98,7 +108,30 @@ body {
     word-wrap: break-word;
     overflow-wrap: break-word;
     white-space: normal;
-    font-size: 1rem;
+    font-size: 1.4vw;
+    font-family: "text",Helvetica,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.grid-item:hover {
+    transform: scale(1.05);
+    background: #d3d3d3;
+}
+.grid-item:active {
+    transform: scale(0.95);
+}
+.grid-item.selected {
+    background: lightslategray;
+    transform: scale(1.05)
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 10px;
+    width: 100%;
+    max-width: 85%;
+    margin: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    position: center;
 }
 .category-row {
     grid-column: span 4;
@@ -164,7 +197,25 @@ body {
 .button-container {
     margin-top: 20px;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 10px;
+    width: 100%;
+}
+.shuffle-button {
+    width: 100%;
+    max-width: 85%;
+    padding: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.button-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 85%;
 }
 button {
     display: block;
@@ -176,9 +227,13 @@ button {
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
+    transition: transform 0.1s ease;
 }
 button:hover {
     background-color: #2980b9;
+}
+button:active {
+    transform: scale(0.95);
 }
 button:disabled {
     background: gray;
@@ -194,5 +249,10 @@ button:disabled {
         -ms-flex-direction: column;
         -webkit-flex-direction: column;
         flex-direction: column;
+    }
+}
+@media (max-width: 1000px) {
+    .grid-container {
+        max-width: 85%;
     }
 }

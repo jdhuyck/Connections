@@ -8,29 +8,30 @@
     <link rel="stylesheet", type="text/css" href="../static/styles.css">
 </head>
 <body>
+    <div class="title">{{ title }}</div>
+    <div class="author">Created by: {{ author }}</div>
+    <div class="guess-counter" id="guess-counter">Incorrect Guesses: 0</div>
     <div class="container">
-        <div class="title" id="puzzle-title">Puzzle Title</div>
-        <div class="author" id="puzzle-author">Created by: Author</div>
-        <div class="grid-container" id="grid"></div>
-        <div class="button-container">
-            <button id="shuffle-button">Shuffle</button>
+        <div class="grid-container" id="grid">
+            {% for word in words %}
+                <div class="grid-item" onclick="toggleSelection(this)">{{ word }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="button-container">
+        <button class="shuffle-button" id="shuffle-button" onclick="shuffleGrid()">Shuffle</button>
+        <div class="button-row">
+            <button id="clear-button">Clear</button>
             <button id="submit-button" disabled>Submit Guess</button>
         </div>
-        <p id="feedback"></p>
     </div>
-    <script>
-        let words = [];
-        let selectedTiles = [];
-        let puzzleId = new URLSearchParams(window.location.search).get("id");
+    <p id="feedback"></p>
 
-        async function fetchPuzzle() {
-            let response = await fetch(`/play/${puzzleId}`);
-            let data = await response.json();
-            document.getElementById("puzzle-title").textContent = data.title;
-            document.getElementById("puzzle-author").textContent = "Created by: " + data.creator;
-            words = data.words;
-            renderGrid();
-        }
+    <script>
+        let words = {{ words | tojson }};
+        let selectedTiles = [];
+        let solvedCategories = [];
+        let incorrectGuesses = 0;
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -42,13 +43,23 @@
         function renderGrid() {
             const grid = document.getElementById("grid");
             grid.innerHTML = "";
+
+            solvedCategories.forEach(category => {
+                const categoryDiv = document.createElement("div");
+                categoryDiv.className = `category-box ${category.color}`;
+                categoryDiv.textContent = category.name;
+                grid.appendChild(categoryDiv);
+            });
+
             words.forEach((word, index) => {
-                const div = document.createElement("div");
-                div.className = "grid-item";
-                div.textContent = word;
-                div.dataset.index = index;
-                div.onclick = () => toggleSelection(div);
-                grid.appendChild(div);
+                if (!solvedCategories.some(cat => cat.words.includes(word))) {
+                    const div = document.createElement("div");
+                    div.className = "grid-item";
+                    div.textContent = word;
+                    div.dataset.index = index;
+                    div.onclick = () => toggleSelection(div);
+                    grid.appendChild(div);
+                }
             });
         }
 
@@ -64,24 +75,42 @@
             document.getElementById("submit-button").disabled = selectedTiles.length !== 4;
         }
 
-        async function submitGuess() {
-            let selectedWords = selectedTiles.map(i => words[i]);
-            let response = await fetch(`/play?id=${puzzleId}`, {
+        function submitGuess() {
+            if (selectedTiles.length !== 4) return;
+
+            const selectedWords = selectedTiles.map(index => words[index]);
+
+            fetch(window.location.pathname, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ words: selectedWords })
-            });
-            let result = await response.json();
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else if (data.correct) {
+                    alert(`Correct! Category: ${data.category.name}`);
+                    solvedCategories.push({ name: data.category.name, color: data.category.color, words: selectedWords });
+                    words = words.filter(word => !selectedWords.includes(word));
+                } else if (data.one_away) {
+                    alert("You're one word away!");
+                } else {
+                    alert("Incorrect guess.");
+                    incorrectGuesses++;
+                    document.getElementById("guess-counter").textContent = `Incorrect Guesses: ${incorrectGuesses}`;
+                }
+                selectedTiles = [];
+                renderGrid();
+                document.getElementById("submit-button").disabled = true;
+            })
+            .catch(error => console.error("Error:", error));
+        }
 
-            if (result.error) {
-                alert(result.error);
-            } else if (result.correct) {
-                alert(`Correct! Category: ${result.category.name}`);
-            } else if (result.one_away) {
-                alert("You're one away from a correct answer!");
-            } else {
-                alert("Incorrect guess.");
-            }
+        function clearSelection() {
+            selectedTiles = [];
+            renderGrid();
+            document.getElementById("submit-button").disabled = true;
         }
 
         document.getElementById("shuffle-button").addEventListener("click", () => {
@@ -89,7 +118,11 @@
             renderGrid();
         });
 
-        fetchPuzzle();
+        document.getElementById("submit-button").addEventListener("click", submitGuess);
+        document.getElementById("clear-button").addEventListener("click", clearSelection);
+
+        shuffleArray(words);
+        renderGrid();
     </script>
 </body>
 </html>
