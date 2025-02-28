@@ -22,6 +22,7 @@ body {
     padding: 12px;
     overflow:hidden;
     flex-flow:row wrap;
+    text-transform: uppercase;
 
     -webkit-justify-content: flex;
     -moz-justify-content: -moz-flex;
@@ -159,6 +160,11 @@ body {
     color: #3e3e4b;
     text-align: left;
     margin-top: 10px;
+}
+.button-container {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
 }
 button {
     display: block;
