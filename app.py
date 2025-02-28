@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import sqlite3
 import random
 import uuid
+import re, ast
 
 app = Flask(__name__)
 
@@ -50,10 +51,13 @@ def play(puzzle_id):
 
     if not puzzle:
         return jsonify({"error": "Puzzle not found"}), 404
+    
+    # class 'str' -> class 'dict'
+    c = ast.literal_eval(re.search('({.+})', puzzle["categories"]).group(0))
 
     # Reconstruct categories
-    titles = list(puzzle["categories"].keys())
-    words = list(puzzle["categories"].values())
+    titles = list(c.keys())
+    words = list(c.values())
     categories = {
         "yellow": {"name": titles[0], "words": words[0]},
         "green":  {"name": titles[1], "words": words[1]},
