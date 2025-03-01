@@ -106,14 +106,13 @@ def play(puzzle_id):
         player_guesses[puzzle_id].add(selected_words)
 
         for color, category in categories.items():
-            if set(selected_words) == category["words"]:
+            if set(selected_words) == set(category["words"]):
                 return jsonify({"correct": True, "category": {"name": category["name"], "color": color}})
+            
+            elif len(set(selected_words) & set(category["words"])) == 3:
+                return jsonify({"one_away": True})
 
-        for color, category in categories.items():
-            if len(set(selected_words) & category["words"]) == 3:
-                return jsonify({"correct": False, "one_away": True})
-
-        return jsonify({"correct": False, "one_away": False})
+        return jsonify({"correct": False, "one_away": False, "incorrect": False})
     
     return render_template("play.html", puzzle_id=puzzle_id, title=puzzle["title"], author=puzzle["creator"], words=all_words)
 
