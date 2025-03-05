@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,16 +7,12 @@
     <link rel="stylesheet", type="text/css" href="../static/styles.css">
 </head>
 <body>
-    <div class="title">{{ title }}</div>
+    <div class="title" id="puzzle-title">{{ title }}</div>
     <div class="author">Created by: {{ author }}</div>
     <div class="guess-counter" id="guess-counter">Incorrect Guesses: 0</div>
-    <div class="container">
-        <div class="grid-container" id="grid">
-            {% for word in words %}
-                <div class="grid-item" onclick="toggleSelection(this)">{{ word }}</div>
-            {% endfor %}
-        </div>
-    </div>
+
+    <div class="grid-container" id="grid"></div>
+
     <div class="button-container">
         <button class="shuffle-button" id="shuffle-button" onclick="shuffleGrid()">Shuffle</button>
         <div class="button-row">
@@ -25,14 +20,14 @@
             <button id="submit-button" disabled>Submit Guess</button>
         </div>
     </div>
-    <p id="feedback"></p>
 
     <script>
+        let puzzleId = "{{ puzzle_id }}";
         let words = {{ words | tojson }};
         let selectedTiles = [];
-        let solvedCategories = [];
         let incorrectGuesses = 0;
-
+        let solvedCategories = [];
+        
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -44,46 +39,50 @@
             const grid = document.getElementById("grid");
             grid.innerHTML = "";
 
+            // Insert category rows first
             solvedCategories.forEach(category => {
                 const categoryDiv = document.createElement("div");
-                categoryDiv.className = `category-box ${category.color}`;
+                categoryDiv.className = "category-row";
+                categoryDiv.style.backgroundColor = category.color;
                 categoryDiv.textContent = category.name;
                 grid.appendChild(categoryDiv);
             });
 
-            words.forEach((word, index) => {
-                if (!solvedCategories.some(cat => cat.words.includes(word))) {
-                    const div = document.createElement("div");
-                    div.className = "grid-item";
-                    div.textContent = word;
-                    div.dataset.index = index;
-                    div.onclick = () => toggleSelection(div);
-                    grid.appendChild(div);
-                }
+            let remainingWords = words.filter(word => 
+                !solvedCategories.some(cat => cat.words.includes(word))
+            );
+
+            let rows = Math.ceil(remainingWords.length / 4);
+            grid.style.gridTemplateRows = `repeat(${rows + solvedCategories.length}, 1fr)`;
+
+            remainingWords.forEach(word => {
+                const div = document.createElement("div");
+                div.className = "grid-item";
+                div.textContent = word;
+                div.onclick = () => toggleSelection(div);
+                grid.appendChild(div);
             });
+
+            document.getElementById("submit-button").disabled = selectedTiles.length !== 4;
         }
 
         function toggleSelection(tile) {
-            const index = tile.dataset.index;
-            if (selectedTiles.includes(index)) {
-                selectedTiles = selectedTiles.filter(i => i !== index);
+            const word = tile.textContent;
+            if (selectedTiles.includes(word)) {
+                selectedTiles = selectedTiles.filter(w => w !== word);
                 tile.classList.remove("selected");
             } else if (selectedTiles.length < 4) {
-                selectedTiles.push(index);
+                selectedTiles.push(word);
                 tile.classList.add("selected");
             }
             document.getElementById("submit-button").disabled = selectedTiles.length !== 4;
         }
 
         function submitGuess() {
-            if (selectedTiles.length !== 4) return;
-
-            const selectedWords = selectedTiles.map(index => words[index]);
-
             fetch(window.location.pathname, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ words: selectedWords })
+                body: JSON.stringify({ words: selectedTiles })
             })
             .then(response => response.json())
             .then(data => {
@@ -91,25 +90,29 @@
                     alert(data.error);
                 } else if (data.correct) {
                     alert(`Correct! Category: ${data.category.name}`);
-                    solvedCategories.push({ name: data.category.name, color: data.category.color, words: selectedWords });
-                    words = words.filter(word => !selectedWords.includes(word));
+                    handleCorrectGuess(data.category, selectedTiles);
                 } else if (data.one_away) {
                     alert("You're one word away!");
                 } else {
                     alert("Incorrect guess.");
                     incorrectGuesses++;
-                    document.getElementById("guess-counter").textContent = `Incorrect Guesses: ${incorrectGuesses}`;
+                    document.getElementById("incorrect-count").textContent = incorrectGuesses;
                 }
-                selectedTiles = [];
-                renderGrid();
-                document.getElementById("submit-button").disabled = true;
-            })
-            .catch(error => console.error("Error:", error));
+                clearSelection();
+            });
+        }
+
+        function handleCorrectGuess(category, selectedWords) {
+            solvedCategories.push({ name: category.name, color: category.color, words: selectedWords });
+
+            words = words.filter(word => !selectedWords.includes(word));
+
+            renderGrid();
         }
 
         function clearSelection() {
             selectedTiles = [];
-            renderGrid();
+            document.querySelectorAll(".grid-item").forEach(tile => tile.classList.remove("selected"));
             document.getElementById("submit-button").disabled = true;
         }
 

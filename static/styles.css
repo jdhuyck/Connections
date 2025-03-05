@@ -68,6 +68,15 @@ body {
     -ms-flex: 2;              /* IE 10 */
     flex: 2;                  /* NEW, Spec - Opera 12.1, Firefox 20+ */
 }
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 10px;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    box-sizing: border-box;
+}
 .grid-preview {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -110,6 +119,7 @@ body {
     white-space: normal;
     font-size: 1.4vw;
     font-family: "text",Helvetica,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+    user-select: none;
 }
 .grid-item:hover {
     transform: scale(1.05);
@@ -135,13 +145,14 @@ body {
 }
 .category-row {
     grid-column: span 4;
+    width: 100%;
     height: 4rem;
+    font-weight: bold;
+    color: white;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: bold;
+    border-radius: 5px;
 }
 .category {
     margin-bottom: 20px;
