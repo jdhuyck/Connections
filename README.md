@@ -38,7 +38,7 @@ sequenceDiagram
     Frontend->>Supabase DB: Store user data
 ```
 ## Database structure
-```mermaid
+```bash
 -- Public puzzles table
 create table public.puzzles (
   id uuid primary key default uuid_generate_v4(),
