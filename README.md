@@ -1,59 +1,69 @@
-# Connections overview
+# React + TypeScript + Vite
 
-## Architecture
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-```mermaid
-graph TD
-    A[React Frontend] -->|GitHub Pages<br/>jdhuyck.github.io/Connections| B[Supabase]
-    B -->|PostgreSQL| C[(Supabase DB)]
-    B -->|Auth| D[Supabase Auth]
-    E[User Devices] -->|HTTPS| A
-    A -->|API Calls| B
-    F[GitHub Actions] -->|Auto-deploy| A
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      ...tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      ...tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      ...tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-## Front End - Github Pages /Connections subdirectory
-React/ts static site
-Communicates with backend via HTTPS
-Stores guest session in local storage
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-/src
-	/components
-		PuzzleBoard.tsx
-		CategorySelctor.tsx
-	/pages
-		PlayPage.tsx
-		CreatePage.tsx
-	/services
-		api.ts
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-## Backend - Supabase
-```mermaid
-sequenceDiagram
-    User->>Frontend: Plays as guest
-    Frontend->>Supabase: Anonymous session
-    User->>Frontend: Clicks "Save Progress"
-    Frontend->>Supabase Auth: Signup (Email/OAuth)
-    Supabase Auth->>Frontend: JWT
-    Frontend->>Supabase DB: Store user data
-```
-## Database structure
-```bash
--- Public puzzles table
-create table public.puzzles (
-  id uuid primary key default uuid_generate_v4(),
-  title text not null,
-  creator_id uuid references auth.users,
-  categories jsonb not null,
-  created_at timestamp default now(),
-  is_public boolean default false
-);
-
--- Enable Row Level Security
-alter table public.puzzles enable row level security;
-
--- Create policies
-create policy "Public puzzles are visible"
-  on public.puzzles for select
-  using (is_public = true);
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
