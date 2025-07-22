@@ -46,7 +46,7 @@ create table puzzles (
   title text not null,
   categories jsonb not null,
   creator_id uuid references auth.users on delete set null,
-  created_at timestamp with time zone default timezone("utc"::text, now()),
+  created_at timestamp with time zone default timezone('utc'::text, now()),
   is_public boolean default false,
   difficulty smallint
 );
