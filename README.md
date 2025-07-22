@@ -1,69 +1,63 @@
-# React + TypeScript + Vite
+# Connections overview
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Architecture
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```mermaid
+graph TD
+    A[React Frontend] -->|GitHub Pages<br/>jdhuyck.github.io/Connections| B[Supabase]
+    B -->|PostgreSQL| C[(Supabase DB)]
+    B -->|Auth| D[Supabase Auth]
+    E[User Devices] -->|HTTPS| A
+    A -->|API Calls| B
+    F[GitHub Actions] -->|Auto-deploy| A
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Front End - Github Pages /Connections subdirectory
+React/ts static site
+Communicates with backend via HTTPS
+Stores guest session in local storage
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+/src
+	/components
+		PuzzleBoard.tsx
+		CategorySelctor.tsx
+	/pages
+		PlayPage.tsx
+		CreatePage.tsx
+	/services
+		api.ts
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Backend - Supabase
+```mermaid
+sequenceDiagram
+    User->>Frontend: Plays as guest
+    Frontend->>Supabase: Anonymous session
+    User->>Frontend: Clicks "Save Progress"
+    Frontend->>Supabase Auth: Signup (Email/OAuth)
+    Supabase Auth->>Frontend: JWT
+    Frontend->>Supabase DB: Store user data
+```
+## Database structure
+```bash
+create extension if not exists pgcrypto;
+
+create table puzzles (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  categories jsonb not null,
+  creator_id uuid references auth.users on delete set null,
+  created_at timestamp with time zone default timezone("utc"::text, now()),
+  is_public boolean default false,
+  difficulty smallint
+);
+
+alter table puzzles enable row level security;
+
+create policy "Public puzzles are visible to all"
+  on puzzles for select
+  using (is_public = true);
+
+create policy "Users can manage their own puzzles"
+  on puzzles for all
+  using (auth.uid() = creator_id);
 ```
